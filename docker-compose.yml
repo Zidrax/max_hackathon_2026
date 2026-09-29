@@ -1,0 +1,47 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: max-backend:latest
+    container_name: max-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      SECRET_KEY: "${SECRET_KEY}"
+      DJANGO_DEBUG: "0"
+      ALLOWED_HOSTS: "*"
+      DB_PATH: "/app/data/db.sqlite3"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,https://max-front-pearl.vercel.app,https://forge.etsi.org"
+      CSRF_TRUSTED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,https://max-front-pearl.vercel.app,https://*.cloudpub.ru,https://*.trycloudflare.com"
+      MAX_BOT_TOKEN: "${MAX_BOT_TOKEN}"
+      MAX_API_BASE_URL: "${MAX_API_BASE_URL}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/admin/login/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Next.js иногда «запекает» env на этапе сборки,
+        # поэтому прокидываем BACKEND_URL ещё и сюда.
+        BACKEND_URL: "http://backend:8000"
+    image: max-frontend:latest
+    container_name: max-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: "production"
+      BACKEND_URL: "http://backend:8000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

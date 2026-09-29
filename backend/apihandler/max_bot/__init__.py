@@ -5,7 +5,7 @@ import httpx
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-CA_CERT = (Path(BASE_DIR) / ".." / "certs" / "Russian_Trusted_Root_CA.cer")
+CA_CERT = Path(__file__).parent.parent.parent / "certs" / "russian_trusted_root_ca.crt"
 ssl_context = ssl.create_default_context(cafile = certifi.where())
 ssl_context.load_verify_locations(cafile = str(CA_CERT))
 
